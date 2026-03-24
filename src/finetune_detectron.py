@@ -260,6 +260,63 @@ class DetectronTrainer:
                 f.write(f"  Segmentação: {mask.tolist()}\n")
                 f.write("\n")
 
+    @staticmethod
+    def convert_yolo_to_coco(yolo_dir: str, images_dir: str, output_coco_json: str, categories: List[str] = ["balloon"]) -> None:
+        """
+        Converte anotações do formato YOLO para formato COCO.
+
+        Args:
+            yolo_dir (str): Diretório contendo arquivos de anotação YOLO (.txt).
+            images_dir (str): Diretório das imagens.
+            output_coco_json (str): Caminho para salvar o JSON COCO.
+            categories (list): Lista de nomes de categorias.
+        """
+        coco_data = {
+            "images": [],
+            "annotations": [],
+            "categories": [{"id": i, "name": name} for i, name in enumerate(categories)]
+        }
+
+        annotation_id = 0
+        for idx, filename in enumerate(os.listdir(images_dir)):
+            if not filename.lower().endswith(('.jpg', '.png')):
+                continue
+
+            image_path = os.path.join(images_dir, filename)
+            height, width = cv2.imread(image_path).shape[:2]  # type: ignore
+
+            coco_data["images"].append({
+                "id": idx,
+                "file_name": filename,
+                "height": height,
+                "width": width
+            })
+
+            yolo_annotation_path = os.path.join(yolo_dir, f"{os.path.splitext(filename)[0]}.txt")
+            if os.path.exists(yolo_annotation_path):
+                with open(yolo_annotation_path, 'r') as f:
+                    for line in f:
+                        parts = line.strip().split()
+                        if len(parts) != 5:
+                            continue
+                        class_id, x_center, y_center, w, h = map(float, parts)
+                        category_id = int(class_id)
+
+                        x_min = (x_center - w / 2) * width
+                        y_min = (y_center - h / 2) * height
+
+                        coco_data["annotations"].append({
+                            "id": annotation_id,
+                            "image_id": idx,
+                            "category_id": category_id,
+                            "area": float(w * h * width * height),
+                            "bbox": [float(x_min), float(y_min), float(w * width), float(h * height)],
+                            "iscrowd": 0
+                        })
+                        annotation_id += 1
+        with open(output_coco_json, 'w') as f:
+            json.dump(coco_data, f, indent=4)
+
     def evaluate_model(
         self,
         dataset_name: str,
