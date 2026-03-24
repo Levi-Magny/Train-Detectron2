@@ -1,0 +1,23 @@
+# ignore backup files and directories
+backup/
+balloon/
+data/
+detectron2/
+logs/
+output/*.0
+output/*.1
+results/
+
+# ignore all .jpg files except those in the output directory
+*.jpg
+
+#ignore venvs
+.venv/
+
+# ignore cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
