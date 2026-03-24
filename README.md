@@ -11,7 +11,7 @@ Biblioteca simples para finetune e inferência com Detectron2 (Mask R-CNN) em da
 ## Dependências principais
 
 - Python 3.8+
-- Detectron2 (v0.6+cpu no exemplo)
+- Detectron2
 - PyTorch 1.10.1+cpu
 - torchvision 0.11.2+cpu
 - OpenCV `opencv-python`
@@ -19,7 +19,7 @@ Biblioteca simples para finetune e inferência com Detectron2 (Mask R-CNN) em da
 - pycocotools
 - pytest
 
-Para o treinamento oficial devem ser usadas as versões com cuda
+Para o treinamento oficial devem ser usadas as versões com cuda, veja em detalhes abaixo.
 
 > Ajuste de acordo com o `pip freeze` do seu ambiente.
 
@@ -28,7 +28,7 @@ Para o treinamento oficial devem ser usadas as versões com cuda
 1. Clone o repositório e entre no diretório:
 
 ```bash
-git clone <url-do-seu-repo>
+git clone https://github.com/Levi-Magny/Train-Detectron2
 cd <repo>/detectron2
 ```
 
@@ -48,13 +48,21 @@ pip install -r requirements.txt
 4. Instale o `Pytorch` a partir do site oficial:
 
 ```bash
+# CPU
 pip install torch==1.10.1+cpu torchvision==0.11.2+cpu torchaudio==0.10.1 -f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+# CUDA 11.1
+pip install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 ```
 
-5. Instale o `detectron2` compilado conforme sua plataforma (se não via `requirements`):
+5. Instale o `detectron2` compilado conforme sua plataforma:
 
 ```bash
+# CPU
 pip install detectron2==0.6 -f   https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.10/index.html
+
+# CUDA 11.1 - torch 1.10
+python -m pip install detectron2==0.6 -f  https://dl.fbaipublicfiles.com/detectron2/wheels/cu111/torch1.10/index.html
 ```
 
 ou usando a release que você compilou manualmente (caminho local ou URL específico).
