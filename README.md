@@ -19,14 +19,7 @@ Biblioteca simples para finetune e inferência com Detectron2 (Mask R-CNN) em da
 - pycocotools
 - pytest
 
-Versões usadas aqui (ambiente documentado):
-
-- detectron2==0.6+cpu
-- torch==1.10.1+cpu
-- torchvision==0.11.2+cpu
-- numpy==1.24.4
-- opencv-python==4.8.0.74
-- pytest==7.x
+Para o treinamento oficial devem ser usadas as versões com cuda
 
 > Ajuste de acordo com o `pip freeze` do seu ambiente.
 
@@ -52,10 +45,16 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. Instale o `detectron2` compilado conforme sua plataforma (se não via `requirements`):
+4. Instale o `Pytorch` a partir do site oficial:
 
 ```bash
-pip install detectron2==0.6+cpu -f https://dl.fbaipublicfiles.com/detectron2/wheels/cu118/torch1.13/index.html
+pip install torch==1.10.1+cpu torchvision==0.11.2+cpu torchaudio==0.10.1 -f https://download.pytorch.org/whl/cpu/torch_stable.html
+```
+
+5. Instale o `detectron2` compilado conforme sua plataforma (se não via `requirements`):
+
+```bash
+pip install detectron2==0.6 -f   https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.10/index.html
 ```
 
 ou usando a release que você compilou manualmente (caminho local ou URL específico).
