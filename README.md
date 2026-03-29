@@ -1,51 +1,53 @@
 # FineTune-Detectron2
 
-Biblioteca simples para finetune e inferência com Detectron2 (Mask R-CNN) em datasets COCO.
+If you ever tried to train or finetune models with Detectron2 you may have had problems while setting up the local environment. The library is very version sensitive, which makes everything much more difficult.
 
-## Organização do projeto
+This is a library made to finetune models with Detectron2 (Mask R-CNN) in COCO datasets. It includes conversion of other dataset standards (such as YOLO and VIA) to COCO format.
 
-- `/src`: código principal (`finetune_detectron.py`, `example_usage.py`, `loading_dataset_example.py`).
-- `/tests`: testes automatizados `pytest`.
-- `/doc`: documentação de exemplo detalhada.
+## Project 
 
-## Dependências principais
+- `/src`: Main code (`finetune_detectron.py`).
+- `/examples`: Usage examples (`example_use.py`, `loading_dataset_example.py`).
+- `/tests`: Automated tests `pytest`.
+- `/doc`: docs and detailed example.
+
+## Main Dependencies
 
 - Python 3.8+
 - Detectron2
-- PyTorch 1.10.1+cpu
-- torchvision 0.11.2+cpu
+- PyTorch
+- torchvision
 - OpenCV `opencv-python`
 - NumPy
 - pycocotools
 - pytest
 
-Para o treinamento oficial devem ser usadas as versões com cuda, veja em detalhes abaixo.
 
-> Ajuste de acordo com o `pip freeze` do seu ambiente.
+## Installation
 
-## Instalação
+### Option 1: Manual installation
 
-1. Clone o repositório e entre no diretório:
+1. Clone the repo and enter the folder:
 
 ```bash
 git clone https://github.com/Levi-Magny/Train-Detectron2
-cd <repo>/detectron2
+cd <local-repo>/detectron2
 ```
 
-2. Crie e ative ambiente virtual (recomendado):
+2. Create and activate the virtual environment:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
 
-3. Instale dependências:
+3. Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Instale o `Pytorch` a partir do site oficial:
+4. Install `Pytorch` from the official website:
 
 ```bash
 # CPU
@@ -55,7 +57,7 @@ pip install torch==1.10.1+cpu torchvision==0.11.2+cpu torchaudio==0.10.1 -f http
 pip install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/cu111/torch_stable.html
 ```
 
-5. Instale o `detectron2` compilado conforme sua plataforma:
+5. Install a compiled version of `detectron2` according to your platform:
 
 ```bash
 # CPU
@@ -65,23 +67,39 @@ pip install detectron2==0.6 -f   https://dl.fbaipublicfiles.com/detectron2/wheel
 python -m pip install detectron2==0.6 -f  https://dl.fbaipublicfiles.com/detectron2/wheels/cu111/torch1.10/index.html
 ```
 
-ou usando a release que você compilou manualmente (caminho local ou URL específico).
+Or compile it manually from the official repository.
 
-## Execução
+### Option 2: Install as package (recommended)
 
-- Testes:
+Install directly from git (includes all dependencies except detectron2):
+
+```bash
+pip install git+https://github.com/Levi-Magny/Train-Detectron2.git
+```
+
+Then install detectron2 separately as above.
+
+For development:
+
+```bash
+pip install "git+https://github.com/Levi-Magny/Train-Detectron2.git#egg=finetune-detectron2[dev]"
+```
+
+## Execution
+
+- Tests:
 
 ```bash
 pytest -q
 ```
 
-- Uso rápido (script de exemplo):
+- Quick example:
 
 ```bash
-python src/example_usage.py
+python examples/example_use.py
 ```
 
-## Estrutura de funcionalidades
+## Structure and functionalities
 
 - `src/finetune_detectron.py`:
   - `DetectronTrainer.convert_via_to_coco`
@@ -92,11 +110,11 @@ python src/example_usage.py
   - funis de conveniência: `train_model`, `predict_image`, `evaluate_model`, `convert_via_to_coco`
 
 - `src/example_usage.py`:
-  - fluxo de conversão Balloon VIA → COCO
-  - treinamento
-  - inferência e gravação de resultados
+  - Conversion of Balloon VIA → COCO
+  - Training
+  - inference and result storing
 
-## Como contribuir
+## How to contribute
 
-Crie um novo branch, adicione testes para cada novo comportamento e abra PR. Mantenha consistência de linha de estilo PEP8 e mensagens em português ou inglês conforme o padrão do projeto.
+Fork the project and create a new branch, add tests for each new feature and open a PR. Maintain consistency with PEP8 and messages in english.
 

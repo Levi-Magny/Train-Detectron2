@@ -10,20 +10,26 @@ import numpy as np
 # Adicionar src no path para importação do pacote local
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from finetune_detectron import DetectronTrainer
+from finetune_detectron2.finetune_detectron import DetectronTrainer
 
 
 def test_convert_via_to_coco_generates_coco_json(tmp_path: Path):
+    """This test verifies that the conversion from VIA to COCO format generates a
+    valid COCO JSON file with the expected structure and values. It creates a simple
+    image and a corresponding VIA annotation, then checks that the resulting COCO JSON
+    contains the correct image, annotation, and category information.
+    
+    :param tmp_path: A temporary directory provided by pytest for storing test files."""
     via_json = tmp_path / "via.json"
     images_dir = tmp_path / "images"
     images_dir.mkdir()
 
-    # Criar imagem de teste (100x100 preta)
+    # Create Test Image (100x100 black)
     image_path = images_dir / "img1.jpg"
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     assert cv2.imwrite(str(image_path), image)
 
-    # Criar anotação VIA para um quadrado simples
+    # Create VIA annotation for a simple square
     via_data = {
         "img1.jpg": {
             "filename": "img1.jpg",
@@ -66,6 +72,13 @@ def test_convert_via_to_coco_generates_coco_json(tmp_path: Path):
 
 
 def test_convert_via_to_coco_handles_no_annotations(tmp_path: Path):
+    """The function tests that the conversion from VIA to COCO format correctly
+    handles cases where there are no annotations present. It creates a simple
+    image and an empty VIA annotation, then checks that the resulting COCO JSON
+    contains the image but no annotations.
+
+    :param tmp_path: A temporary directory provided by pytest for storing test files.
+    """
     via_json = tmp_path / "via_empty.json"
     images_dir = tmp_path / "images"
     images_dir.mkdir()
@@ -99,17 +112,25 @@ def test_convert_via_to_coco_handles_no_annotations(tmp_path: Path):
 
 
 def test_convert_yolo_to_coco_output_values(tmp_path: Path):
+    """
+    This test verifies that the conversion from YOLO to COCO format produces
+    the expected bounding box and area values. It creates a simple image and a
+    corresponding YOLO annotation, then checks that the resulting COCO JSON
+    contains the correct bounding box and area for the annotation.
+
+    :param tmp_path: A temporary directory provided by pytest for storing test files.
+    """
     images_dir = tmp_path / "images"
     yolo_dir = tmp_path / "yolo"
     images_dir.mkdir()
     yolo_dir.mkdir()
 
-    # Criar imagem de teste (100x100) para a correspondência YOLO
+    # Create Test Image (100x100) for YOLO annotation matching
     image_path = images_dir / "img1.jpg"
     image = np.zeros((100, 100, 3), dtype=np.uint8)
     assert cv2.imwrite(str(image_path), image)
 
-    # Criar anotação YOLO: classe 0, centro no meio, largura=0.6, altura=0.4
+    # Create YOLO annotation: class 0, center at the middle, width=0.6, height=0.4
     yolo_annotation = "0 0.5 0.5 0.6 0.4\n"
     (yolo_dir / "img1.txt").write_text(yolo_annotation)
 

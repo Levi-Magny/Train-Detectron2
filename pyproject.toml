@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finetune-detectron2"
+version = "0.1.0"
+description = "Detectron2 finetune utilities with COCO/YOLO/VIA converters"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Levi Magny" }]
+license = { text = "MIT" }
+keywords = ["detectron2", "coco", "data-conversion", "training", "mask-rcnn"]
+
+dependencies = [
+  "torch==1.10.1",
+  "torchvision==0.11.2",
+  "opencv-python",
+  "numpy==1.19.5",
+  "pycocotools",
+  "pytest==8.3.5",
+  "matplotlib==3.4.3",
+  "Pillow==8.4.0",
+  "PyYAML==6.0.3",
+  "typing_extensions==4.13.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "flake8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

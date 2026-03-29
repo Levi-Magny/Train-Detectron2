@@ -1,13 +1,13 @@
 """
-Módulo para treinamento e inferência com Detectron2.
+Module for training and inference with Detectron2.
 
-Este módulo fornece funções para treinar um modelo Mask R-CNN R50-FPN pré-treinado no COCO
-em um dataset personalizado no formato COCO, e para realizar predições em imagens.
+This module provides functions for training a pre-trained Mask R-CNN R50-FPN model on the COCO dataset
+and for performing predictions on images.
 
-Exemplo de uso:
+Example usage:
     from finetune-detectron import train_model, predict_image
 
-    # Treinar
+    # Train
     train_model(
         dataset_name="my_dataset",
         json_train="path/to/train.json",
@@ -19,7 +19,7 @@ Exemplo de uso:
         max_iter=300
     )
 
-    # Predizer
+    # Predict
     results = predict_image(
         image_path="path/to/image.jpg",
         model_weights="./output/model_final.pth",
@@ -30,7 +30,6 @@ Exemplo de uso:
 import cv2
 import os
 import json
-import numpy as np
 from typing import Optional, Dict, Any, List
 
 from detectron2.utils.logger import setup_logger
@@ -41,7 +40,6 @@ from detectron2.engine import DefaultTrainer, DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.data.datasets import register_coco_instances
 from detectron2.data import MetadataCatalog
-from detectron2.structures import BoxMode
 from detectron2.utils.visualizer import Visualizer
 from detectron2.utils.events import TensorboardXWriter
 
@@ -135,21 +133,21 @@ class DetectronTrainer:
         device: str = "cpu"
     ) -> None:
         """
-        Treina o modelo Mask R-CNN no dataset fornecido.
+        Trains the model Mask R-CNN on the provided dataset.
 
         Args:
-            dataset_name (str): Nome do dataset (usado para registro).
-            json_train (str): Caminho para o arquivo JSON de anotações de treino (formato COCO).
-            images_train (str): Diretório das imagens de treino.
-            json_val (str, optional): Caminho para o arquivo JSON de anotações de validação.
-            images_val (str, optional): Diretório das imagens de validação.
-            output_dir (str): Diretório para salvar checkpoints e logs.
-            pretrained_weights (str, optional): Caminho para pesos pré-treinados. Se None, baixa do COCO.
-            num_classes (int): Número de classes no dataset (excluindo background).
-            max_iter (int): Número máximo de iterações de treinamento.
-            batch_size (int): Tamanho do batch por GPU (IMS_PER_BATCH).
-            learning_rate (float): Taxa de aprendizado base.
-            device (str): Dispositivo para treinamento ("cpu" ou "cuda").
+            dataset_name (str): Name of the dataset (used for registration).
+            json_train (str): Path to the training annotation file (COCO format).
+            images_train (str): Directory of training images.
+            json_val (str, optional): Path to the validation annotation file (COCO format).
+            images_val (str, optional): Directory of validation images.
+            output_dir (str): Directory for saving checkpoints and logs.
+            pretrained_weights (str, optional): Path to pre-trained weights. If None, downloads from COCO.
+            num_classes (int): NNumber of classes in the dataset (excluding background).
+            max_iter (int): Maximum number of training iterations.
+            batch_size (int): Batch size per GPU (IMS_PER_BATCH).
+            learning_rate (float): Base learning rate.
+            device (str): Device for training ("cpu" or "cuda").
         """
         # Registrar datasets
         register_coco_instances(f"{dataset_name}_train", {}, json_train, images_train)
@@ -327,26 +325,26 @@ class DetectronTrainer:
         device: str = "cpu"
     ) -> Dict[str, Any]:
         """
-        Avalia o modelo no dataset de validação.
+        Evaluates the model on the validation dataset.
 
         Args:
-            dataset_name (str): Nome do dataset.
-            json_val (str): JSON de validação.
-            images_val (str): Diretório de imagens de validação.
-            model_weights (str): Pesos do modelo.
-            num_classes (int): Número de classes.
-            device (str): Dispositivo.
+            dataset_name (str): Name of the dataset.
+            json_val (str): Validation JSON file.
+            images_val (str): Directory of validation images.
+            model_weights (str): Model weights.
+            num_classes (int): NNumber of classes.
+            device (str): Device for evaluation.
 
         Returns:
-            dict: Métricas de avaliação.
+            dict: Evaluation metrics.
         """
         from detectron2.evaluation import COCOEvaluator, inference_on_dataset
         from detectron2.data import build_detection_test_loader
 
-        # Registrar dataset
+        # Register dataset
         register_coco_instances(f"{dataset_name}_val", {}, json_val, images_val)
 
-        # Configurar
+        # Configure
         cfg = get_cfg()
         cfg.merge_from_file(model_zoo.get_config_file(self.config_file))
         cfg.DATASETS.TEST = (f"{dataset_name}_val",)
@@ -354,7 +352,7 @@ class DetectronTrainer:
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = num_classes
         cfg.MODEL.DEVICE = device
 
-        # Avaliar
+        # Evalueate
         evaluator = COCOEvaluator(f"{dataset_name}_val", cfg, False, output_dir="./output")
         val_loader = build_detection_test_loader(cfg, f"{dataset_name}_val")
         results = inference_on_dataset(DefaultPredictor(cfg), val_loader, evaluator)
@@ -362,12 +360,12 @@ class DetectronTrainer:
         return results
 
 
-# Funções de conveniência para uso direto
+# Convinience functions for easier usage without needing to instantiate the class directly.
 def train_model(**kwargs) -> None:
     """
-    Função de conveniência para treinar o modelo.
+    Function for convenience to train the model.
 
-    Args: Veja DetectronTrainer.train().
+    Args: See DetectronTrainer.train().
     """
     trainer = DetectronTrainer()
     trainer.train(**kwargs)
@@ -375,9 +373,9 @@ def train_model(**kwargs) -> None:
 
 def predict_image(**kwargs) -> Dict[str, Any]:
     """
-    Função de conveniência para predição.
+    Function for convenience to make predictions.
 
-    Args: Veja DetectronTrainer.predict().
+    Args: See DetectronTrainer.predict().
 
     Returns: Resultado da predição.
     """
@@ -387,7 +385,7 @@ def predict_image(**kwargs) -> Dict[str, Any]:
 
 def evaluate_model(**kwargs) -> Dict[str, Any]:
     """
-    Função de conveniência para avaliação.
+    Function for convenience to evaluate the model.
 
     Args: Veja DetectronTrainer.evaluate_model().
 
@@ -399,8 +397,17 @@ def evaluate_model(**kwargs) -> Dict[str, Any]:
 
 def convert_via_to_coco(**kwargs) -> None:
     """
-    Função de conveniência para conversão VIA para COCO.
+    Function for convenience to convert VIA to COCO.
 
-    Args: Veja DetectronTrainer.convert_via_to_coco().
+    Args: See DetectronTrainer.convert_via_to_coco().
     """
     DetectronTrainer.convert_via_to_coco(**kwargs)
+
+
+def convert_yolo_to_coco(**kwargs) -> None:
+    """
+    Function for convenience to convert YOLO to COCO.
+
+    Args: See DetectronTrainer.convert_yolo_to_coco().
+    """
+    DetectronTrainer.convert_yolo_to_coco(**kwargs)

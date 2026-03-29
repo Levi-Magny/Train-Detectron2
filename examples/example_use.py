@@ -1,15 +1,15 @@
 """
-Exemplo de uso da biblioteca finetune-detectron com o dataset Balloon.
+Example of using the finetune-detectron library with the Balloon dataset.
 
-Este script converte as anotações VIA do Balloon para COCO, treina o modelo,
-e realiza uma predição em uma imagem de exemplo.
+This script converts the VIA annotations of the Balloon dataset to COCO format, trains the model,
+and performs a prediction on an example image.
 """
 
 import os
-from finetune_detectron import DetectronTrainer
+from finetune_detectron2.finetune_detectron import DetectronTrainer
 
 def main():
-    # Caminhos do dataset Balloon
+    # Paths to the Balloon dataset
     trainer = DetectronTrainer("COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml")
     balloon_dir = "balloon"
     train_dir = os.path.join(balloon_dir, "train")
@@ -17,15 +17,15 @@ def main():
     via_train_json = os.path.join(train_dir, "via_region_data.json")
     via_val_json = os.path.join(val_dir, "via_region_data.json")
 
-    # Caminhos para JSON COCO convertidos
+    # Path to the converted COCO JSON files
     coco_train_json = os.path.join(train_dir, "coco_annotations.json")
     coco_val_json = os.path.join(val_dir, "coco_annotations.json")
 
-    # Converter VIA para COCO
+    # Convert VIA to COCO
     trainer.convert_via_to_coco(via_json_path=via_train_json, images_dir=train_dir, output_coco_json=coco_train_json)
     trainer.convert_via_to_coco(via_json_path=via_val_json, images_dir=val_dir, output_coco_json=coco_val_json)
 
-    # Treinar o modelo
+    # Train the model
     trainer.train(
         dataset_name="balloon",
         json_train=coco_train_json,
@@ -38,9 +38,9 @@ def main():
         device="cpu"
     )
 
-    # Exemplo de predição
-    # Assumindo que há uma imagem de exemplo
-    image_path = "test.jpg"  # Substitua por uma imagem real
+    # Prediction example
+    # Assuning there is an example image
+    image_path = "test.jpg"  # Replace with a real image path for testing
     if os.path.exists(image_path):
         results = trainer.predict(
             image_path=image_path,
@@ -49,11 +49,11 @@ def main():
             device="cpu"
         )
 
-        # Salvar a imagem com predições
+        # Save the image with predictions
         trainer.save_prediction_image(results, "prediction_result.jpg")
-        print("Predição salva em prediction_result.jpg")
+        print("Prediction saved in prediction_result.jpg")
     else:
-        print(f"Imagem {image_path} não encontrada. Adicione uma imagem para testar a predição.")
+        print(f"Image {image_path} not found. Add an image in order to test the prediction.")
 
 if __name__ == "__main__":
     main()

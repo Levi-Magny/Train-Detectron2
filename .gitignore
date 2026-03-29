@@ -18,6 +18,12 @@ results/
 __pycache__/
 *.pyc
 *.pyo
+
+# ignore build artifacts
+dist/
+build/
+*.egg-info/
+src/*.egg-info/
 *.pyd
 *.log
 *.tmp
