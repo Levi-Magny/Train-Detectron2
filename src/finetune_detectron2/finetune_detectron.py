@@ -130,8 +130,9 @@ class DetectronTrainer:
         max_iter: int = 300,
         batch_size: int = 2,
         learning_rate: float = 0.00025,
-        device: str = "cpu"
-    ) -> None:
+        device: str = "cpu",
+        evaluate_after_train: bool = False
+    ) -> Optional[Dict[str, Any]]:
         """
         Trains the model Mask R-CNN on the provided dataset.
 
@@ -143,11 +144,13 @@ class DetectronTrainer:
             images_val (str, optional): Directory of validation images.
             output_dir (str): Directory for saving checkpoints and logs.
             pretrained_weights (str, optional): Path to pre-trained weights. If None, downloads from COCO.
-            num_classes (int): NNumber of classes in the dataset (excluding background).
+            num_classes (int): Number of classes in the dataset (excluding background).
             max_iter (int): Maximum number of training iterations.
             batch_size (int): Batch size per GPU (IMS_PER_BATCH).
             learning_rate (float): Base learning rate.
             device (str): Device for training ("cpu" or "cuda").
+            evaluate_after_train (bool): If True and json_val/images_val are provided, evaluates
+                the model after training and returns mAP-50 and mAP-50-95 metrics.
         """
         # Registrar datasets
         register_coco_instances(f"{dataset_name}_train", {}, json_train, images_train)
@@ -173,6 +176,19 @@ class DetectronTrainer:
         trainer = DefaultTrainer(cfg)
         trainer.resume_or_load(resume=False)
         trainer.train()
+
+        if evaluate_after_train and json_val and images_val:
+            model_weights = os.path.join(output_dir, "model_final.pth")
+            return self.evaluate_model(
+                dataset_name=dataset_name,
+                json_val=json_val,
+                images_val=images_val,
+                model_weights=model_weights,
+                num_classes=num_classes,
+                device=device,
+                output_dir=output_dir
+            )
+        return None
 
     def predict(
         self,
@@ -322,53 +338,89 @@ class DetectronTrainer:
         images_val: str,
         model_weights: str,
         num_classes: int = 1,
-        device: str = "cpu"
+        device: str = "cpu",
+        output_dir: str = "./output"
     ) -> Dict[str, Any]:
         """
-        Evaluates the model on the validation dataset.
+        Evaluates the model on the validation dataset and returns mAP-50 and mAP-50-95.
 
         Args:
             dataset_name (str): Name of the dataset.
-            json_val (str): Validation JSON file.
+            json_val (str): Path to the validation annotation file (COCO format).
             images_val (str): Directory of validation images.
-            model_weights (str): Model weights.
-            num_classes (int): NNumber of classes.
-            device (str): Device for evaluation.
+            model_weights (str): Path to the trained model weights (.pth).
+            num_classes (int): Number of classes.
+            device (str): Device for evaluation ("cpu" or "cuda").
+            output_dir (str): Directory for evaluation outputs.
 
         Returns:
-            dict: Evaluation metrics.
+            dict: Dictionary with keys per task ("bbox", "segm") each containing
+                  "mAP-50" (AP at IoU=0.50) and "mAP-50-95" (AP averaged over
+                  IoU thresholds 0.50:0.05:0.95), plus "_raw" with full COCO results.
         """
         from detectron2.evaluation import COCOEvaluator, inference_on_dataset
-        from detectron2.data import build_detection_test_loader
+        from detectron2.data import build_detection_test_loader, DatasetCatalog
+        from detectron2.modeling import build_model
+        from detectron2.checkpoint import DetectionCheckpointer
 
-        # Register dataset
-        register_coco_instances(f"{dataset_name}_val", {}, json_val, images_val)
+        val_dataset_name = f"{dataset_name}_val"
+
+        # Register dataset only if not already registered
+        if val_dataset_name not in DatasetCatalog.list():
+            register_coco_instances(val_dataset_name, {}, json_val, images_val)
 
         # Configure
         cfg = get_cfg()
         cfg.merge_from_file(model_zoo.get_config_file(self.config_file))
-        cfg.DATASETS.TEST = (f"{dataset_name}_val",)
+        cfg.DATASETS.TEST = (val_dataset_name,)
         cfg.MODEL.WEIGHTS = model_weights
         cfg.MODEL.ROI_HEADS.NUM_CLASSES = num_classes
         cfg.MODEL.DEVICE = device
+        cfg.OUTPUT_DIR = output_dir
 
-        # Evalueate
-        evaluator = COCOEvaluator(f"{dataset_name}_val", cfg, False, output_dir="./output")
-        val_loader = build_detection_test_loader(cfg, f"{dataset_name}_val")
-        results = inference_on_dataset(DefaultPredictor(cfg), val_loader, evaluator)
+        # Build model and load weights (inference_on_dataset requires an nn.Module)
+        model = build_model(cfg)
+        DetectionCheckpointer(model).load(model_weights)
+        model.eval()
 
-        return results
+        # Evaluate
+        evaluator = COCOEvaluator(val_dataset_name, output_dir=output_dir)
+        val_loader = build_detection_test_loader(cfg, val_dataset_name)
+        raw_results = inference_on_dataset(model, val_loader, evaluator)
+
+        # Extract and display mAP-50 and mAP-50-95 per task
+        metrics: Dict[str, Any] = {}
+        print("\n" + "=" * 50)
+        print("Evaluation Results")
+        print("=" * 50)
+        for task, task_results in raw_results.items():
+            map50 = task_results.get("AP50", None)
+            map5095 = task_results.get("AP", None)
+            metrics[task] = {
+                "mAP-50": map50,
+                "mAP-50-95": map5095,
+            }
+            map50_str = f"{map50:.2f}" if map50 is not None else "N/A"
+            map5095_str = f"{map5095:.2f}" if map5095 is not None else "N/A"
+            print(f"[{task.upper()}] mAP-50: {map50_str} | mAP-50-95: {map5095_str}")
+        print("=" * 50 + "\n")
+
+        metrics["_raw"] = raw_results
+        return metrics
 
 
 # Convinience functions for easier usage without needing to instantiate the class directly.
-def train_model(**kwargs) -> None:
+def train_model(**kwargs) -> Optional[Dict[str, Any]]:
     """
     Function for convenience to train the model.
 
     Args: See DetectronTrainer.train().
+
+    Returns:
+        Evaluation metrics (mAP-50, mAP-50-95) if evaluate_after_train=True, otherwise None.
     """
     trainer = DetectronTrainer()
-    trainer.train(**kwargs)
+    return trainer.train(**kwargs)
 
 
 def predict_image(**kwargs) -> Dict[str, Any]:
